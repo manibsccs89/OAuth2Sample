@@ -45,9 +45,9 @@ namespace AuthServer.Features.Account.Commands
 
         public class RegisterUserCommandHandler : IRequestHandler<Data, RegisterResponseViewModel>
         {
-            private readonly UserManager<IdentityUser> _userManager;
+            private readonly UserManager<AppUser> _userManager;
 
-            public RegisterUserCommandHandler(UserManager<IdentityUser> userManager)
+            public RegisterUserCommandHandler(UserManager<AppUser> userManager)
             {
                 _userManager = userManager;
             }
