@@ -17,18 +17,23 @@ namespace Resource.Api
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddCors();
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;                
-            }).AddJwtBearer(o =>
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddIdentityServerAuthentication(o =>
             {
-                o.Authority = "http://localhost:5000";
-                o.Audience = "resourceapi";
+                o.Authority = "http://identityserver:5000";
+                o.ApiName = "resourceapi";
                 o.RequireHttpsMetadata = false;
+                o.IntrospectionDiscoveryPolicy.ValidateIssuerName = false;
             });
 
             services.AddAuthorization(options =>
@@ -36,19 +41,19 @@ namespace Resource.Api
                 options.AddPolicy("ApiReader", policy => policy.RequireClaim("scope", "api.read"));
                 options.AddPolicy("Consumer", policy => policy.RequireClaim(ClaimTypes.Role, "consumer"));
             });
-
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            app.UseCors(options => options
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithOrigins("http://localhost:4200"));
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
             app.UseAuthentication();
 

@@ -41,22 +41,23 @@ namespace AuthServer
                 .AddEntityFrameworkStores<AppIdentityDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddIdentityServer()
+            services.AddIdentityServer(opt =>
+                {
+                    opt.IssuerUri = "http://identityserver:5000";
+                })
                 .AddDeveloperSigningCredential()
                 .AddOperationalStore(options =>
                 {
-                    options.ConfigureDbContext = builder => builder.UseInMemoryDatabase("InMemoryDb");
+                    options.ConfigureDbContext = builder => builder
+                        .UseInMemoryDatabase("InMemoryDb");
+
                     options.EnableTokenCleanup = true;
                 })
                 .AddInMemoryIdentityResources(Config.GetIdentityResources())
                 .AddInMemoryApiResources(Config.GetApiResources())
                 .AddInMemoryClients(Config.GetClients())
+                .AddCorsPolicyService<InMemoryCorsPolicyService>()
                 .AddAspNetIdentity<AppUser>();
-
-            services.AddCors(options => options.AddPolicy("AllowAll", p => p
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader()));
 
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
         }
@@ -68,10 +69,14 @@ namespace AuthServer
 
             loggerFactory.AddFile("logs/AuthServer-{Date}.txt");
 
+            app.UseCors(builder => builder
+                .WithOrigins("http://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials());
+
             app.UseErrorHandling();
             app.UseStaticFiles();
-            app.UseCors("AllowAll");
-            app.UseHttpsRedirection();
             app.UseIdentityServer();
 
             app.UseMvc(routes =>
