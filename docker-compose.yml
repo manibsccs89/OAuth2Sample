@@ -1,0 +1,30 @@
+version: "3.4"
+
+services:
+  auth.server:
+    image: auth.server
+    build:
+      context: .
+      dockerfile: AuthServer/Dockerfile
+    ports:
+      - '5000:5000'
+
+  resource.api:
+    image: resource.api
+    links:
+      - auth.server
+    build:
+      context: .
+      dockerfile: Resource.Api/Dockerfile
+    ports:
+      - '5050:5050'
+      
+  client:
+    image: client
+    links:
+      - resource.api
+    build:
+      context: .
+      dockerfile: oauth-client/Dockerfile
+    ports:
+      - '4200:80'
